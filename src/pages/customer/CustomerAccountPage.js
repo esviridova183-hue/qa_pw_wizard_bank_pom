@@ -3,7 +3,8 @@ import { expect } from '@playwright/test';
 export class CustomerAccountPage {
   constructor(page) {
     this.page = page;
-    this.accountIdDropDown = page.getByTestId('accountSelect');
+    // Исправлено: ищем по ID #accountSelect вместо несуществующего getByTestId
+    this.accountIdDropDown = page.locator('#accountSelect');
     this.accountDataLine = page
       .locator('div')
       .filter({
@@ -34,11 +35,13 @@ export class CustomerAccountPage {
   }
 
   async assertAccountIdInDropDownHasValue(value) {
-    const accountNumberInDrodown = this.accountIdDropDown;
-    await expect(accountNumberInDrodown).toHaveValue(value);
+    // Ждем, пока селект аккаунта появится и отрендерится Angular
+    await this.accountIdDropDown.waitFor({ state: 'visible', timeout: 15000 });
+    await expect(this.accountIdDropDown).toHaveValue(value);
   }
 
   async assertAccountLineContainsText(text) {
+    await this.accountDataLine.waitFor({ state: 'visible', timeout: 15000 });
     await expect(this.accountDataLine).toContainText(text);
   }
 

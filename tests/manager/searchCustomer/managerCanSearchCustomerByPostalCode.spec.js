@@ -1,30 +1,43 @@
 import { test } from '@playwright/test';
 import { faker } from '@faker-js/faker';
+import { BankHomePage } from '../../../src/pages/BankHomePage';
+import { AddCustomerPage } from '../../../src/pages/manager/AddCustomerPage';
+import { CustomersListPage } from '../../../src/pages/manager/CustomersListPage';
 
 let firstName;
 let lastName;
 let postalCode;
 
 test.beforeEach(async ({ page }) => {
-  /* 
-  Pre-conditons:
-  1. Open Add Customer page.
-  2. Fill the First Name.  
-  3. Fill the Last Name.
-  4. Fill the Postal Code.
-  5. Click [Add Customer].
-  */
+  const bankHomePage = new BankHomePage(page);
+  const addCustomerPage = new AddCustomerPage(page);
+
   firstName = faker.person.firstName();
   lastName = faker.person.lastName();
-  postalCode = faker.location.zipCode();
+  // Длинный числовой код, чтобы он не совпал с почтовыми индексами демо-клиентов
+  postalCode = faker.string.numeric(10);
+
+  // Алерт после добавления клиента закрываем сами
+  page.once('dialog', async (dialog) => {
+    await dialog.accept();
+  });
+
+  await bankHomePage.open();
+  await bankHomePage.clickManagerLoginButton();
+
+  await addCustomerPage.openAddCustomerForm();
+  await addCustomerPage.fillFirstName(firstName);
+  await addCustomerPage.fillLastName(lastName);
+  await addCustomerPage.fillPostCode(postalCode);
+  await addCustomerPage.clickAddCustomerButton();
 });
 
 test('Assert manager can search customer by Postal Code', async ({ page }) => {
-  /* 
-  Test:
-  1. Open Customers page.
-  2. Fill the postalCode to the search field
-  3. Assert customer row is present in the table. 
-  4. Assert no other rows is present in the table.
-  */
+  const customersListPage = new CustomersListPage(page);
+
+  await customersListPage.openCustomersList();
+  await customersListPage.fillSearchField(postalCode);
+
+  await customersListPage.assertCustomerRowIsPresent(firstName, lastName);
+  await customersListPage.assertNoOtherRowsArePresent();
 });
