@@ -1,38 +1,49 @@
-import { expect } from '@playwright/test';
+import { test } from '@playwright/test';
+import { faker } from '@faker-js/faker';
+import { BankHomePage } from '../../../src/pages/BankHomePage';
+import { AddCustomerPage } from '../../../src/pages/manager/AddCustomerPage';
+import { OpenAccountPage } from '../../../src/pages/manager/OpenAccountPage';
+import { CustomersListPage } from '../../../src/pages/manager/CustomersListPage';
 
-export class OpenAccountPage {
-  constructor(page) {
-    this.page = page;
-    this.openAccountTab = page.locator('button[ng-click="openAccount()"]');
-    this.customerDropdown = page.locator('#userSelect');
-    this.currencyDropdown = page.locator('#currency');
-    this.processButton = page.locator('button[type="submit"]');
-  }
+const firstName = faker.person.firstName();
+const lastName = faker.person.lastName();
+const postCode = faker.location.zipCode('#####');
 
-  async open() {
-    await this.page.goto(
-      'https://www.globalsqa.com/angularJs-protractor/BankingProject/#/manager/openAccount'
-    );
-    await expect(this.currencyDropdown).toBeVisible();
-  }
+test.beforeEach(async ({ page }) => {
+  const bankHomePage = new BankHomePage(page);
+  const addCustomerPage = new AddCustomerPage(page);
 
-  async clickOpenAccountTab() {
-    await this.openAccountTab.click();
-  }
+  page.once('dialog', async (dialog) => {
+    await dialog.accept();
+  });
 
-  async selectCustomer(fullName) {
-    await this.customerDropdown.selectOption({ label: fullName });
-  }
+  await bankHomePage.open();
+  await bankHomePage.clickManagerLoginButton();
 
-  async selectCurrency(currency) {
-    await this.currencyDropdown.selectOption({ label: currency });
-  }
+  await addCustomerPage.openAddCustomerForm();
+  await addCustomerPage.fillFirstName(firstName);
+  await addCustomerPage.fillLastName(lastName);
+  await addCustomerPage.fillPostCode(postCode);
+  await addCustomerPage.clickAddCustomerButton();
 
-  async clickProcessButton() {
-    await this.processButton.click();
-  }
+  await page.reload();
+});
 
-  async assertCurrencyDropdownHasValue(currency) {
-    await expect(this.currencyDropdown).toHaveValue(currency);
-  }
-}
+test('Assert manager can open account for new customer', async ({ page }) => {
+  const openAccountPage = new OpenAccountPage(page);
+  const customersListPage = new CustomersListPage(page);
+
+  page.once('dialog', async (dialog) => {
+    await dialog.accept();
+  });
+
+  await openAccountPage.clickOpenAccountTab();
+  await openAccountPage.selectCustomer(`${firstName} ${lastName}`);
+  await openAccountPage.selectCurrency('Dollar');
+  await openAccountPage.clickProcessButton();
+
+  await page.reload();
+
+  await customersListPage.openCustomersList();
+  await customersListPage.assertLastCustomerHasAccountNumber();
+});

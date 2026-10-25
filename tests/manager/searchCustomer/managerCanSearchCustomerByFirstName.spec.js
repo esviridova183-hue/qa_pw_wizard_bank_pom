@@ -12,11 +12,11 @@ test.beforeEach(async ({ page }) => {
   const bankHomePage = new BankHomePage(page);
   const addCustomerPage = new AddCustomerPage(page);
 
-  firstName = faker.person.firstName();
+  // Случайные буквы в конце, чтобы имя не совпало с демо-клиентами
+  firstName = faker.person.firstName() + faker.string.alpha(6);
   lastName = faker.person.lastName();
   postalCode = faker.location.zipCode();
 
-  // Алерт после добавления клиента закрываем сами
   page.once('dialog', async (dialog) => {
     await dialog.accept();
   });

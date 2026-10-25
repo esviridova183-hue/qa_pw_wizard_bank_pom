@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test } from '@playwright/test';
 import { faker } from '@faker-js/faker';
 import { BankHomePage } from '../../../src/pages/BankHomePage';
 import { AddCustomerPage } from '../../../src/pages/manager/AddCustomerPage';
@@ -12,7 +12,6 @@ test.beforeEach(async ({ page }) => {
   const bankHomePage = new BankHomePage(page);
   const addCustomerPage = new AddCustomerPage(page);
 
-  // Алерт после добавления клиента закрываем сами, иначе клик зависнет
   page.once('dialog', async (dialog) => {
     await dialog.accept();
   });
